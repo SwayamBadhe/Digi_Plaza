@@ -1,9 +1,19 @@
 import express from 'express';
 import { getPayloadClient } from './get-payload';
 import { nextApp, nextHandler } from './next-utils';
+import * as trpcExpress from '@trpc/server/adapters/express';
+import { appRouter } from './trpc';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+
+const createContext = ({
+  req,
+  res,
+}: trpcExpress.CreateExpressContextOptions) => ({
+  req,
+  res,
+});
 
 const start = async () => {
   const payload = await getPayloadClient({
@@ -14,6 +24,19 @@ const start = async () => {
       },
     },
   });
+
+  app.use(
+    'api/trpc',
+    trpcExpress.createExpressMiddleware({
+      router: appRouter,
+      /**
+       * createContext: A function that creates a context object to be passed to tRPC handlers. This context typically includes
+       * the request and response objects, allowing handlers to access information about the incoming request
+       * and manipulate the response if needed.
+       */
+      createContext,
+    })
+  );
 
   app.use((req, res) => nextHandler(req, res));
 
