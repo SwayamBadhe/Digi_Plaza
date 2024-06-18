@@ -1,7 +1,7 @@
-import { getPayloadClient } from '../get-payload';
-import { publicProcedure, router } from './trpc';
-import { AuthCredentialsValidator } from '../lib/validators/account-credentials';
 import { TRPCError } from '@trpc/server';
+import { getPayloadClient } from '../get-payload';
+import { AuthCredentialsValidator } from '../lib/validators/account-credentials';
+import { publicProcedure, router } from './trpc';
 
 export const authRouter = router({
   createPayloadUser: publicProcedure
@@ -10,7 +10,7 @@ export const authRouter = router({
       const { email, password } = input;
       const payload = await getPayloadClient();
 
-      // check if user exists
+      // check if user already exists
       const { docs: users } = await payload.find({
         collection: 'users',
         where: {
@@ -20,9 +20,7 @@ export const authRouter = router({
         },
       });
 
-      if (users.length !== 0) {
-        throw new TRPCError({ code: 'CONFLICT' });
-      }
+      if (users.length !== 0) throw new TRPCError({ code: 'CONFLICT' });
 
       await payload.create({
         collection: 'users',
@@ -34,5 +32,29 @@ export const authRouter = router({
       });
 
       return { success: true, sentToEmail: email };
+    }),
+
+  signIn: publicProcedure
+    .input(AuthCredentialsValidator)
+    .mutation(async ({ input, ctx }) => {
+      const { email, password } = input;
+      const { res } = ctx;
+
+      const payload = await getPayloadClient();
+
+      try {
+        await payload.login({
+          collection: 'users',
+          data: {
+            email,
+            password,
+          },
+          res,
+        });
+
+        return { success: true };
+      } catch (err) {
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      }
     }),
 });
