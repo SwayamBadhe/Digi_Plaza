@@ -16,6 +16,10 @@ const createContext = ({
   res,
 });
 
+/**
+ * inferAsyncReturnType is a utility function provided
+ * by @trpc/server that infers the return type of an asynchronous function.
+ */
 export type ExpressContext = inferAsyncReturnType<typeof createContext>;
 
 const start = async () => {
