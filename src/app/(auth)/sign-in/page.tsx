@@ -48,12 +48,10 @@ const Page = () => {
 
       if (origin) {
         router.push(`/${origin}`);
-        return;
       }
 
       if (isSeller) {
         router.push('/sell');
-        return;
       }
 
       router.push('/');
